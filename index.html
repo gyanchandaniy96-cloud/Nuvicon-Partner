@@ -38,8 +38,8 @@ nav button.on{color:var(--ink);box-shadow:inset 0 3px 0 var(--acc)}
 <script>
 var U="https://ptbaxvqvwhgowflxzqmh.supabase.co",K="sb_publishable_QeRuu6oa6UKMuPTaIjgLcg_BuX-n2dI";
 var sb=window.supabase.createClient(U,K);
-var LBL={placed:"Taiyaar ho raha hai",staged:"Pickup ke liye ready",picked_up:"Maal utha liya",in_transit:"Raste mein",delivered:"Deliver ho gaya"};
-var NEXT={staged:["picked_up","Maal utha liya"],picked_up:["in_transit","Nikal gaya"],in_transit:["delivered","Deliver ho gaya"]};
+var LBL={placed:"Being prepared",staged:"Ready for pickup",picked_up:"Picked up",in_transit:"On the way",delivered:"Delivered"};
+var NEXT={staged:["picked_up","Picked up"],picked_up:["in_transit","On the way"],in_transit:["delivered","Delivered"]};
 var S={city:"Pusad",user:null,me:null,boot:true,step:"phone",phone:"",otp:"",err:"",busy:false,tab:"active",orders:[],sum:null,loadErr:""};
 function esc(t){return String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;")}
 function fmt(n){return "₹"+Math.round(Number(n)).toLocaleString("en-IN")}
@@ -63,34 +63,35 @@ function orderCard(o){
  var map=(o.delivery_lat!=null)?"https://www.google.com/maps/dir/?api=1&travelmode=driving&destination="+o.delivery_lat+","+o.delivery_lng:"https://www.google.com/maps/search/?api=1&query="+encodeURIComponent((o.address||"")+", "+o.zone+", "+S.city);
  return '<div class="card"><div class="flex"><div><b>#'+esc(o.order_no)+'</b> <span class="pill '+o.status+'">'+esc(LBL[o.status]||o.status)+'</span><br><small>'+esc(o.zone)+', '+dt(o.created_at)+'</small></div><b>'+fmt(o.total)+'</b></div>'+
  '<div class="items">'+items+'</div>'+
- '<div><small>Customer: <b>'+esc(o.customer_name||"")+'</b> +'+esc(o.customer_phone)+'<br>Area: '+esc(o.zone||"-")+'<br>Address: '+esc(o.address||"-")+'</small></div>'+(o.distance_km!=null?'<div style="margin-top:6px"><b>Godown se '+esc(o.distance_km)+' km</b></div>':'')+
- (cod&&o.status!=="delivered"?'<div style="margin-top:6px"><span class="pill cod">COD</span> <b>'+fmt(o.total)+'</b> <small>customer se lena hai</small></div>':'')+
- (o.status==="delivered"?'<div style="margin-top:6px"><small>Fee '+fmt(o.partner_fee||0)+(o.cod_collected!=null?', COD liya '+fmt(o.cod_collected):'')+'</small></div>':'')+
- (o.status!=="delivered"?'<div class="row"><a class="btn" href="tel:+'+esc(o.customer_phone)+'">Call</a><a class="btn" target="_blank" rel="noopener" href="'+map+'">Rasta (Map)</a></div>':'')+
+ '<div><small>Customer: <b>'+esc(o.customer_name||"")+'</b> +'+esc(o.customer_phone)+'<br>Area: '+esc(o.zone||"-")+'<br>Address: '+esc(o.address||"-")+'</small></div>'+(o.distance_km!=null?'<div style="margin-top:6px"><b>'+esc(o.distance_km)+' km from the godown</b></div>':'')+
+ (cod&&o.status!=="delivered"?'<div style="margin-top:6px"><span class="pill cod">COD</span> <b>'+fmt(o.total)+'</b> <small>collect from customer</small></div>':'')+
+ (o.pay_method==="credit"&&o.status!=="delivered"?'<div style="margin-top:6px"><small><b>Credit order.</b> Do not collect money from the customer.</small></div>':'')+
+ (o.status==="delivered"?'<div style="margin-top:6px"><small>Fee '+fmt(o.partner_fee||0)+(o.cod_collected!=null?', COD collected '+fmt(o.cod_collected):'')+'</small></div>':'')+
+ (o.status!=="delivered"?'<div class="row"><a class="btn" href="tel:+'+esc(o.customer_phone)+'">Call</a><a class="btn" target="_blank" rel="noopener" href="'+map+'">Directions (Map)</a></div>':'')+
  (nx?'<div style="margin-top:10px"><button class="btn'+(nx[0]==="delivered"?' dark':'')+'" data-a="st" data-id="'+o.id+'" data-s="'+nx[0]+'">'+esc(nx[1])+'</button></div>':'')+
- (o.status==="placed"?'<div style="margin-top:8px"><small>Godown mein maal taiyaar ho raha hai. Ready hote hi yahan button aa jayega.</small></div>':'')+'</div>'}
+ (o.status==="placed"?'<div style="margin-top:8px"><small>The order is being prepared at the godown. The button appears here as soon as it is ready.</small></div>':'')+'</div>'}
 function homeV(){
  var act=S.orders.filter(function(o){return o.status!=="delivered"}),done=S.orders.filter(function(o){return o.status==="delivered"});
  var list=S.tab==="active"?act:done;
- return '<h1>'+(S.tab==="active"?'Mere orders':'Ho chuke (3 din)')+'</h1>'+(S.loadErr?'<div class="err">'+esc(S.loadErr)+'</div>':'')+(list.length?list.map(orderCard).join(""):'<div class="empty">'+(S.tab==="active"?'Abhi koi order assign nahi hai.':'Abhi kuch nahi.')+'</div>')}
+ return '<h1>'+(S.tab==="active"?'My orders':'Completed (3 days)')+'</h1>'+(S.loadErr?'<div class="err">'+esc(S.loadErr)+'</div>':'')+(list.length?list.map(orderCard).join(""):'<div class="empty">'+(S.tab==="active"?'No orders assigned yet.':'Nothing yet.')+'</div>')}
 function earnV(){
  var s=S.sum||{deliveries:0,fee:0,cod:0};
- return '<h1>Is mahine</h1><div class="stat"><div><small>Deliveries</small><b>'+s.deliveries+'</b></div><div><small>Fee</small><b>'+fmt(s.fee)+'</b></div><div><small>COD liya</small><b>'+fmt(s.cod)+'</b></div></div><p class="mut"><small>COD ka paisa Nuvicon ko jama karna hai. Fee ka hisaab Nuvicon team se hota hai.</small></p>'}
+ return '<h1>This month</h1><div class="stat"><div><small>Deliveries</small><b>'+s.deliveries+'</b></div><div><small>Fee</small><b>'+fmt(s.fee)+'</b></div><div><small>COD collected</small><b>'+fmt(s.cod)+'</b></div></div><p class="mut"><small>COD cash must be deposited with Nuvicon. Fee settlement is done with the Nuvicon team.</small></p>'}
 function msgV(t,d){return '<main><h1 style="margin-top:60px">'+t+'</h1><p class="mut">'+d+'</p><button class="btn ghost" data-a="out">Log out</button></main>'}
 function loginV(){
  return '<main><h1 style="margin-top:60px">Nuvicon Partner</h1><p class="mut">Delivery partner login</p>'+
- (S.step==="phone"?'<input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" value="'+esc(S.phone)+'"><button class="btn" data-a="send"'+(S.busy?' disabled':'')+'>Code bhejo</button>':
- '<input id="otp" type="tel" inputmode="numeric" maxlength="6" placeholder="6-digit code" value="'+esc(S.otp)+'"><button class="btn" data-a="verify"'+(S.busy?' disabled':'')+'>Verify</button><div style="margin-top:8px"><button class="btn ghost" data-a="back">Number badlo</button></div>')+
+ (S.step==="phone"?'<input id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" value="'+esc(S.phone)+'"><button class="btn" data-a="send"'+(S.busy?' disabled':'')+'>Send code</button>':
+ '<input id="otp" type="tel" inputmode="numeric" maxlength="6" placeholder="6-digit code" value="'+esc(S.otp)+'"><button class="btn" data-a="verify"'+(S.busy?' disabled':'')+'>Verify</button><div style="margin-top:8px"><button class="btn ghost" data-a="back">Change number</button></div>')+
  (S.err?'<div class="err">'+esc(S.err)+'</div>':'')+'</main>'}
 function render(){
  var a=document.getElementById("app"),n=document.getElementById("nav");n.innerHTML="";
  if(S.boot){a.innerHTML='<div class="empty">Loading…</div>';return}
  if(!S.user){a.innerHTML=loginV();return}
- if(!S.me){a.innerHTML=msgV("Partner account nahi","Yeh number delivery partner ke roop mein juda nahi hai. Nuvicon team se number jodne ko kaho.");return}
- if(S.me.status==="pending"){a.innerHTML=msgV("Approval baaki hai","Aapka account Nuvicon team ke approve karne ka intezaar kar raha hai.");return}
- if(S.me.status==="suspended"||!S.me.active){a.innerHTML=msgV("Account band hai","Nuvicon team se baat karo.");return}
+ if(!S.me){a.innerHTML=msgV("No partner account","This number is not linked to a delivery partner. Ask the Nuvicon team to add your number.");return}
+ if(S.me.status==="pending"){a.innerHTML=msgV("Approval pending","Your account is waiting for the Nuvicon team to approve it.");return}
+ if(S.me.status==="suspended"||!S.me.active){a.innerHTML=msgV("Account suspended","Please contact the Nuvicon team.");return}
  a.innerHTML='<div class="top"><div><b>NUVICON</b><small>PARTNER</small></div><div><small style="color:#aaa">'+esc(S.me.name)+'</small> <button data-a="out">Log out</button></div></div><main>'+(S.tab==="earn"?earnV():homeV())+'</main>';
- n.innerHTML=[["active","Orders"],["done","Ho chuke"],["earn","Kamai"]].map(function(t){return '<button class="'+(S.tab===t[0]?'on':'')+'" data-a="tab" data-id="'+t[0]+'">'+t[1]+'</button>'}).join("")}
+ n.innerHTML=[["active","Orders"],["done","Completed"],["earn","Earnings"]].map(function(t){return '<button class="'+(S.tab===t[0]?'on':'')+'" data-a="tab" data-id="'+t[0]+'">'+t[1]+'</button>'}).join("")}
 document.addEventListener("click",async function(e){
  var b=e.target.closest("[data-a]");if(!b||b.disabled||b.tagName==="A")return;
  var a=b.dataset.a,id=b.dataset.id,y=window.scrollY;S.err="";
@@ -98,7 +99,7 @@ document.addEventListener("click",async function(e){
  else if(a==="back"){S.step="phone";S.otp=""}
  else if(a==="out"){await sb.auth.signOut();S.user=null;S.me=null;S.orders=[]}
  else if(a==="send"){
-  if(!/^[6-9][0-9]{9}$/.test(S.phone))S.err="Sahi 10-digit number daalo.";
+  if(!/^[6-9][0-9]{9}$/.test(S.phone))S.err="Enter a valid 10-digit number.";
   else{S.busy=true;render();var r=await sb.auth.signInWithOtp({phone:"+91"+S.phone});S.busy=false;if(r.error)S.err=r.error.message;else S.step="otp"}}
  else if(a==="verify"){
   S.busy=true;render();var r2=await sb.auth.verifyOtp({phone:"+91"+S.phone,token:S.otp,type:"sms"});S.busy=false;
@@ -107,13 +108,13 @@ document.addEventListener("click",async function(e){
   var s=b.dataset.s,o=S.orders.find(function(x){return String(x.id)===String(id)}),cod=null;
   if(s==="delivered"){
    if(o.pay_method==="on_delivery"){
-    var v=prompt("Customer se kitne rupaye liye? (Total "+fmt(o.total)+")",Math.round(o.total));if(v===null)return;cod=parseFloat(v);
-    if(!(cod>=0)){alert("Sahi rakam likho");return}
-    if(cod<o.total&&!confirm("Total "+fmt(o.total)+" hai, aapne "+fmt(cod)+" likha. Pakka?"))return}
-   else if(!confirm("Deliver ho gaya mark karna hai?"))return}
+    var v=prompt("How much did you collect from the customer? (Total "+fmt(o.total)+")",Math.round(o.total));if(v===null)return;cod=parseFloat(v);
+    if(!(cod>=0)){alert("Enter a valid amount");return}
+    if(cod<o.total&&!confirm("Total "+fmt(o.total)+", you entered "+fmt(cod)+". Are you sure?"))return}
+   else if(!confirm("Mark as delivered?"))return}
   b.disabled=true;
   var r3=await sb.rpc("partner_set_status",{p_order:+id,p_status:s,p_cod:cod});
-  if(r3.error)alert(r3.error.message);else toast("Update ho gaya");
+  if(r3.error)alert(r3.error.message);else toast("Updated");
   await load()}
  render();window.scrollTo(0,y)});
 document.addEventListener("input",function(e){var i=e.target.id;
